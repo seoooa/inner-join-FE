@@ -3,10 +3,13 @@ export const baseTheme = {
     fontFamily: "'Roboto', sans-serif",
     fontSize: "16px",
   },
-  colors: {
+  color: {
     primary: "#B10D15f0",
     primaryLight: "#FFEDED",
     primaryDarken: "#88181C",
+    primaryHover: "#A50C13",
+    secondary: "#aaa",
+    secondaryHover: "#888",
     white: "#FFFFFF",
     black: "#1A1A1A",
     gray1: "#F9F9F9",
