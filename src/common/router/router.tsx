@@ -1,7 +1,7 @@
 import { createBrowserRouter } from "react-router-dom";
 import DocEvaluate from "../../manager/pages/DocEvaluate";
 import { GlobalStyle } from "../styles/GlobalStyles";
-import { LoginPage, SignupPage } from "../../auth/pages";
+import { LoginPage, SignupPage, VerificationPage } from "../../auth/pages";
 import {
   ApplicationFormPage,
   MyPage,
@@ -14,6 +14,7 @@ export const ROUTES = {
   SIGNUP: "/signup",
   LOGIN: "/login",
   DOCEVALUATE: "/doc-eval",
+  VERIFICATION: "/verification",
   MY: "/my",
   RECRUITMENT: "/recruitment/:clubId",
   APPLICATION: "/application/:clubId",
@@ -31,6 +32,10 @@ export const router = createBrowserRouter([
   {
     path: ROUTES.LOGIN,
     element: <LoginPage />,
+  },
+  {
+    path: ROUTES.VERIFICATION,
+    element: <VerificationPage />,
   },
   {
     path: ROUTES.MY,
