@@ -8,6 +8,7 @@ import {
   validatePassword,
   validateStudentId,
 } from "../utils/utils";
+import { useNavigate } from "react-router-dom";
 
 const clubCategories = [
   { label: "봉사분과", value: 1 },
@@ -65,6 +66,7 @@ const fields: TFormFieldProps[] = [
 ];
 
 export const ManagerSignupForm = () => {
+  const navigate = useNavigate();
   const [step, setStep] = useState(1);
   const [formData, setFormData] = useState<Record<string, string | number>>({
     동아리명: "",
@@ -83,6 +85,7 @@ export const ManagerSignupForm = () => {
     } else {
       const completeData = { ...formData, ...values };
       console.log(completeData);
+      navigate("/verification");
     }
   };
 

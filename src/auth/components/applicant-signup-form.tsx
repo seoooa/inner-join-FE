@@ -1,3 +1,4 @@
+import { useNavigate } from "react-router-dom";
 import { Form, TFormFieldProps } from "../../common/ui";
 import {
   validateEmail,
@@ -35,8 +36,10 @@ const fields: TFormFieldProps[] = [
 ];
 
 export const ApplicantSignupForm = () => {
+  const navigate = useNavigate();
   const handleFormSubmit = (values: Record<string, string | number>) => {
     console.log(values);
+    navigate("/verification");
   };
 
   return (

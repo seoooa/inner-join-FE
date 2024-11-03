@@ -6,7 +6,7 @@ import { Button } from "../button";
 export type TFormFieldProps = {
   label: string;
   value: string | number;
-  type: "text" | "email" | "password" | "select";
+  type: "text" | "email" | "password" | "select" | "verificationCode";
   options?: { label: string; value: string | number }[];
   validate?: (value: string | number) => string | null;
   section?: string;

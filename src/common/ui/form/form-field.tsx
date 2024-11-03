@@ -1,4 +1,9 @@
-import { TextField, EmailField, SelectField } from "../field";
+import {
+  TextField,
+  EmailField,
+  SelectField,
+  VerificationCodeField,
+} from "../field";
 import { TFormFieldProps } from "./form";
 
 type TFormFieldComponentProps = {
@@ -46,6 +51,12 @@ export const FormFieldComponent = ({
           onChange={(value) =>
             handleChange(field.label, parseInt(value.toString()))
           }
+          error={error}
+        />
+      ) : field.type === "verificationCode" ? (
+        <VerificationCodeField
+          label={field.label}
+          onChange={(code) => handleChange(field.label, code)}
           error={error}
         />
       ) : null}
