@@ -1,6 +1,7 @@
 import { createBrowserRouter } from "react-router-dom";
 import DocEvaluate from "../../manager/pages/DocEvaluate";
 import { GlobalStyle } from "../styles/GlobalStyles";
+import ResultShare from "../../manager/pages/ResultShare";
 import { LoginPage, SignupPage, VerificationPage } from "../../auth/pages";
 import {
   ApplicationFormPage,
@@ -18,6 +19,7 @@ export const ROUTES = {
   MY: "/my",
   RECRUITMENT: "/recruitment/:clubId",
   APPLICATION: "/application/:clubId",
+  RESULTSHARE: "/result",
 };
 
 export const router = createBrowserRouter([
@@ -55,6 +57,15 @@ export const router = createBrowserRouter([
       <div>
         <GlobalStyle />
         <DocEvaluate />
+      </div>
+    ),
+  },
+  {
+    path: ROUTES.RESULTSHARE,
+    element: (
+      <div>
+        <GlobalStyle />
+        <ResultShare />
       </div>
     ),
   },

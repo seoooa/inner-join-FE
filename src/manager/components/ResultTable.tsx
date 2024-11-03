@@ -18,16 +18,22 @@ interface ResultTableProps {
 const ResultTable = ({ restList, passList, failList }: ResultTableProps) => {
   return (
     <Wrapper>
-      <div>
-        <TableTitle state="null">미평가</TableTitle>
-        <TableContainer>
-          {restList?.map((applicant, index) => (
-            <TableItem key={applicant.id} loc={index} length={restList.length}>
-              {applicant.name}
-            </TableItem>
-          ))}
-        </TableContainer>
-      </div>
+      {restList.length > 0 && (
+        <div>
+          <TableTitle state="null">미평가</TableTitle>
+          <TableContainer>
+            {restList?.map((applicant, index) => (
+              <TableItem
+                key={applicant.id}
+                loc={index}
+                length={restList.length}
+              >
+                {applicant.name}
+              </TableItem>
+            ))}
+          </TableContainer>
+        </div>
+      )}
       <div>
         <TableTitle state="pass">합격</TableTitle>
         <TableContainer>
@@ -56,7 +62,8 @@ export default ResultTable;
 
 const Wrapper = styled.div`
   display: flex;
-  justify-content: space-around;
+  justify-content: center;
+  gap: 40px;
   font-family: Pretendard;
 `;
 
