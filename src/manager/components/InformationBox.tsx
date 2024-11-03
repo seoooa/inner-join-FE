@@ -22,33 +22,6 @@ const InformationBox = ({
 }: InformationBoxProps) => {
   return (
     <Wrapper>
-      <h2>
-        {passList.length + failList.length + restList.length}명 중{" "}
-        {passList.length}명이 합격했어요 !
-      </h2>
-      <InfoRatio>
-        <div>
-          <h3>합격률</h3>
-          <p>
-            {Math.round(
-              (passList.length * 100) /
-                (passList.length + failList.length + restList.length)
-            )}
-          </p>
-          <h3>%</h3>
-        </div>
-        <div>
-          <h3>경쟁률</h3>
-          <p>
-            {Math.round(
-              ((passList.length + failList.length + restList.length) /
-                passList.length) *
-                Math.pow(10, 2)
-            ) / Math.pow(10, 2)}{" "}
-            : 1
-          </p>
-        </div>
-      </InfoRatio>
       <InfoBox>
         <div>
           <h3>전체</h3>
@@ -80,51 +53,6 @@ const Wrapper = styled.div`
   display: flex;
   flex-direction: column;
   align-items: center;
-
-  h2 {
-    color: #000;
-    text-align: center;
-    font-family: Pretendard;
-    font-size: 32px;
-    font-style: normal;
-    font-weight: 600;
-    line-height: 170%; /* 54.4px */
-    letter-spacing: -0.64px;
-  }
-`;
-
-const InfoRatio = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 28px;
-
-  div {
-    display: flex;
-    align-items: center;
-  }
-
-  h3 {
-    color: #000;
-    text-align: center;
-    font-family: Pretendard;
-    font-size: 20px;
-    font-style: normal;
-    font-weight: 500;
-    line-height: 170%; /* 34px */
-    letter-spacing: -0.4px;
-    margin: 0px 3px;
-  }
-  p {
-    color: #000;
-    text-align: center;
-    font-family: Pretendard;
-    font-size: 28px;
-    font-style: normal;
-    font-weight: 600;
-    line-height: 170%; /* 47.6px */
-    letter-spacing: -0.56px;
-    margin-left: 5px;
-  }
 `;
 
 const InfoBox = styled.div`
