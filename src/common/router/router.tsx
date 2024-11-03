@@ -2,22 +2,54 @@ import { createBrowserRouter } from "react-router-dom";
 import DocEvaluate from "../../manager/pages/DocEvaluate";
 import { GlobalStyle } from "../styles/GlobalStyles";
 import ResultShare from "../../manager/pages/ResultShare";
+import { LoginPage, SignupPage, VerificationPage } from "../../auth/pages";
+import {
+  ApplicationFormPage,
+  MyPage,
+  RecruitmentListPage,
+  RecruitmentPage,
+} from "../../applicant/pages";
 
 export const ROUTES = {
+  LANDING: "/",
   SIGNUP: "/signup",
   LOGIN: "/login",
   DOCEVALUATE: "/doc-eval",
+  VERIFICATION: "/verification",
+  MY: "/my",
+  RECRUITMENT: "/recruitment/:clubId",
+  APPLICATION: "/application/:clubId",
   RESULTSHARE: "/result",
 };
 
 export const router = createBrowserRouter([
   {
+    path: ROUTES.LANDING,
+    element: <RecruitmentListPage />,
+  },
+  {
     path: ROUTES.SIGNUP,
-    element: <></>,
+    element: <SignupPage />,
   },
   {
     path: ROUTES.LOGIN,
-    element: <></>,
+    element: <LoginPage />,
+  },
+  {
+    path: ROUTES.VERIFICATION,
+    element: <VerificationPage />,
+  },
+  {
+    path: ROUTES.MY,
+    element: <MyPage />,
+  },
+  {
+    path: ROUTES.RECRUITMENT,
+    element: <RecruitmentPage />,
+  },
+  {
+    path: ROUTES.APPLICATION,
+    element: <ApplicationFormPage />,
   },
   {
     path: ROUTES.DOCEVALUATE,
