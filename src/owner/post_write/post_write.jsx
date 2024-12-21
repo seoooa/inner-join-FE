@@ -1,4 +1,4 @@
-import React, { useState, useContext } from "react";
+import React, { useState, useContext, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import styled from "styled-components";
 import { PostContext } from "../post_context/post_context";
@@ -16,10 +16,61 @@ const PostWrite = () => {
   const [showPopup, setShowPopup] = useState(false);
   const [popupMessage, setPopupMessage] = useState("");
   const [isOpenRecruitment, setIsOpenRecruitment] = useState(false); // 상시모집 상태
+  const [forms, setForms] = useState([]); // 지원폼 리스트
+  const [selectedForm, setSelectedForm] = useState(""); // 선택된 지원폼
+  const [showFormDropdown, setShowFormDropdown] = useState(false); // 드롭다운 상태
+  const dropdownRef = useRef(null);
 
-  const handleSubmit = (e) => {
+  // 로컬 스토리지에서 지원폼 리스트 불러오기
+  useEffect(() => {
+    const savedForms = JSON.parse(localStorage.getItem("savedForms")) || [];
+    setForms(savedForms);
+  }, []);
+
+  // 드롭다운 외부 클릭 감지
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setShowFormDropdown(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
+
+  // const handleSubmit = (e) => {
+  //   e.preventDefault();
+
+  //   if (!isOpenRecruitment && (!deadline || !hour || !minute)) {
+  //     setPopupMessage(
+  //       "마감일과 마감 시간을 입력하거나 상시모집을 선택해주세요."
+  //     );
+  //     setShowPopup(true);
+  //     return;
+  //   }
+
+  //   const newPost = {
+  //     id: Date.now(),
+  //     title,
+  //     date: new Date().toLocaleDateString(),
+  //     deadline: isOpenRecruitment
+  //       ? "상시모집"
+  //       : `${deadline} ${period} ${hour}:${minute}`,
+  //     description,
+  //     images,
+  //     isOpenRecruitment,
+  //   };
+
+  //   addPost(newPost);
+  //   navigate("/post-manage");
+  // };
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
 
+    // 마감일과 마감 시간이 제대로 입력되었는지 확인
     if (!isOpenRecruitment && (!deadline || !hour || !minute)) {
       setPopupMessage(
         "마감일과 마감 시간을 입력하거나 상시모집을 선택해주세요."
@@ -28,20 +79,48 @@ const PostWrite = () => {
       return;
     }
 
+    // 폼 데이터 준비
     const newPost = {
-      id: Date.now(),
       title,
       date: new Date().toLocaleDateString(),
       deadline: isOpenRecruitment
         ? "상시모집"
         : `${deadline} ${period} ${hour}:${minute}`,
       description,
-      images,
       isOpenRecruitment,
     };
 
-    addPost(newPost);
-    navigate("/post-manage");
+    // FormData 객체를 사용하여 multipart/form-data 형식으로 데이터 구성
+    const formData = new FormData();
+    formData.append("post", JSON.stringify(newPost)); // post 객체는 JSON 문자열로 전송
+    images.forEach((image) => {
+      formData.append("images", image); // 이미지 파일들 추가
+    });
+
+    // API에 데이터 전송
+    try {
+      const response = await fetch("/posts", {
+        method: "POST",
+        headers: {
+          Accept: "application/json",
+        },
+        body: formData,
+      });
+
+      const data = await response.json();
+      if (data.isSuccess) {
+        // 요청이 성공하면 포스트 관리 페이지로 이동
+        navigate("/post-manage");
+      } else {
+        // 실패한 경우 팝업 메시지 표시
+        setPopupMessage(data.message);
+        setShowPopup(true);
+      }
+    } catch (error) {
+      // 네트워크 오류 등 발생 시 처리
+      setPopupMessage("서버와의 연결에 실패했습니다.");
+      setShowPopup(true);
+    }
   };
 
   const handleDateChange = (e) => {
@@ -185,6 +264,41 @@ const PostWrite = () => {
             ))}
           </ImagePreviewContainer>
         </ImageUploadWrapper>
+        {/* 지원폼 선택하기 */}
+        <FormSelectWrapper ref={dropdownRef}>
+          <Label>지원폼 선택</Label>
+          <FormSelectButton
+            onClick={(e) => {
+              e.preventDefault(); // 기본 submit 동작 방지
+              e.stopPropagation(); // 클릭 이벤트 전파 방지
+              setShowFormDropdown((prev) => !prev);
+            }}
+          >
+            {selectedForm || "지원폼 선택하기"}
+          </FormSelectButton>
+          {showFormDropdown && (
+            <Dropdown>
+              {forms.length > 0 ? (
+                forms.map((form) => (
+                  <DropdownOption
+                    key={form.id}
+                    onClick={(e) => {
+                      e.preventDefault(); // 기본 submit 동작 방지
+                      e.stopPropagation(); // 클릭 이벤트 전파 방지
+                      setSelectedForm(form.title);
+                      setShowFormDropdown(false);
+                    }}
+                  >
+                    {form.title}
+                  </DropdownOption>
+                ))
+              ) : (
+                <NoFormsMessage>저장된 지원폼이 없습니다.</NoFormsMessage>
+              )}
+            </Dropdown>
+          )}
+        </FormSelectWrapper>
+
         <ButtonContainer>
           <ListButton type="submit">작성 완료</ListButton>
         </ButtonContainer>
@@ -375,4 +489,48 @@ const OpenRecruitmentButton = styled.button`
   &:hover {
     background-color: ${(props) => (props.active ? "#9C0C13" : "#E0E0E0")};
   }
+`;
+
+const FormSelectWrapper = styled.div`
+  position: relative;
+  width: 100%;
+`;
+
+const FormSelectButton = styled.button`
+  width: 100%;
+  padding: 10px;
+  font-size: 16px;
+  border: 1px solid #ddd;
+  border-radius: 5px;
+  background-color: #f9f9f9;
+  text-align: left;
+  cursor: pointer;
+
+  &:hover {
+    background-color: #f2f2f2;
+  }
+`;
+
+const Dropdown = styled.div`
+  position: absolute;
+  width: 100%;
+  background-color: white;
+  border: 1px solid #ddd;
+  border-radius: 5px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  z-index: 10;
+`;
+
+const DropdownOption = styled.div`
+  padding: 10px;
+  cursor: pointer;
+  &:hover {
+    background-color: #f2f2f2;
+  }
+`;
+
+const NoFormsMessage = styled.div`
+  padding: 10px;
+  text-align: center;
+  color: #888;
 `;

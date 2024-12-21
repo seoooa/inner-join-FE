@@ -9,10 +9,12 @@ const ApplyForm = () => {
   const [formTitle, setFormTitle] = useState("");
   const [formDescription, setFormDescription] = useState("");
   const [formContent, setFormContent] = useState([]);
+  const [popupMessage, setPopupMessage] = useState(""); // 팝업 메시지 상태
+  const [showPopup, setShowPopup] = useState(false); // 팝업 표시 여부 상태
 
+  // 로컬 스토리지에서 폼 데이터 불러오기
   useEffect(() => {
     if (formId) {
-      // 폼 수정 시 기존 데이터 로드
       const savedForms = JSON.parse(localStorage.getItem("savedForms")) || [];
       const formToEdit = savedForms.find((form) => form.id === formId);
       if (formToEdit) {
@@ -23,59 +25,114 @@ const ApplyForm = () => {
     }
   }, [formId]);
 
-  const saveForm = () => {
-    const savedForms = JSON.parse(localStorage.getItem("savedForms")) || [];
-    const newForm = {
-      id: formId || Date.now().toString(), // 기존 폼 ID 유지 또는 새 ID 생성
-      title: formTitle, // 폼 제목 저장
-      description: formDescription, // 폼 설명 저장
-      content: formContent, // 질문, 경계선, 설명글 포함한 데이터 저장
-    };
-
-    if (formId) {
-      // 수정 모드일 경우 기존 폼을 업데이트
-      const updatedForms = savedForms.map((form) =>
-        form.id === formId ? newForm : form
-      );
-      localStorage.setItem("savedForms", JSON.stringify(updatedForms));
-    } else {
-      // 새 폼 저장
-      localStorage.setItem(
-        "savedForms",
-        JSON.stringify([...savedForms, newForm])
-      );
+  // 폼 저장
+  const saveForm = async () => {
+    if (!(formTitle || "").trim()) {
+      setPopupMessage("폼 제목을 입력해주세요.");
+      setShowPopup(true);
+      return;
     }
 
-    navigate("/apply-manage"); // 저장 후 관리 페이지로 이동
+    if (formContent.length === 0) {
+      setPopupMessage("폼에 최소 한 개의 질문을 추가해주세요.");
+      setShowPopup(true);
+      return;
+    }
+
+    for (const question of formContent) {
+      // 설명글(description)은 제목 검사를 제외
+      if (question.type !== "description") {
+        if (!question.question || question.question.trim() === "") {
+          setPopupMessage("모든 질문에 제목을 입력해주세요.");
+          setShowPopup(true);
+          return;
+        }
+        if (!question.type) {
+          setPopupMessage("모든 질문의 타입을 선택해주세요.");
+          setShowPopup(true);
+          return;
+        }
+      }
+    }
+
+    // 유효성 검증 완료 후 저장
+    await handleSaveForm();
   };
 
+  const handleSaveForm = async () => {
+    const formData = {
+      title: formTitle,
+      description: formDescription,
+      questionList: formContent.map((item, index) => ({
+        number: index + 1, // 질문 번호
+        question: item.question, // 질문 제목
+        type: item.type.toUpperCase(), // 질문 타입 (대문자로 변환)
+        list: item.options || [], // 옵션 리스트 (객관식/체크박스일 경우만 포함)
+      })),
+    };
+
+    try {
+      const response = await fetch("/form", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(formData),
+      });
+
+      const result = await response.json();
+
+      if (result.isSuccess) {
+        console.log("폼 저장 성공:", result.result);
+        navigate("/apply-manage");
+      } else {
+        console.error("폼 저장 실패:", result.message);
+        setPopupMessage(result.message || "폼 저장에 실패했습니다.");
+        setShowPopup(true);
+      }
+    } catch (error) {
+      console.error("API 호출 에러:", error);
+      setPopupMessage("폼 저장 중 오류가 발생했습니다.");
+      setShowPopup(true);
+    }
+  };
+
+  const closePopup = () => {
+    setShowPopup(false);
+  };
+
+  // 새로운 질문 추가
   const addQuestion = (type) => {
-    setFormContent([
-      ...formContent,
+    setFormContent((prev) => [
+      ...prev,
       {
         id: Date.now().toString(),
         type,
         question: "",
         description: "",
         options: type === "multiple_choice" || type === "checkbox" ? [""] : [],
+        isRequired: false,
       },
     ]);
   };
 
-  const addBorder = () => {
-    setFormContent([
-      ...formContent,
-      { id: Date.now().toString(), type: "border" },
-    ]);
-  };
+  // // 경계선 추가
+  // const addBorder = () => {
+  //   setFormContent((prev) => [
+  //     ...prev,
+  //     { id: Date.now().toString(), type: "border" },
+  //   ]);
+  // };
 
+  // 설명글 추가
   const addDescription = () => {
-    setFormContent([
-      ...formContent,
-      { id: Date.now().toString(), type: "description" },
+    setFormContent((prev) => [
+      ...prev,
+      { id: Date.now().toString(), type: "description", text: "" },
     ]);
   };
 
+  // 항목을 위로 이동
   const moveItemUp = (index) => {
     if (index === 0) return; // 첫 번째 항목은 위로 이동 불가
     const updatedContent = [...formContent];
@@ -84,6 +141,7 @@ const ApplyForm = () => {
     setFormContent(updatedContent);
   };
 
+  // 항목을 아래로 이동
   const moveItemDown = (index) => {
     if (index === formContent.length - 1) return; // 마지막 항목은 아래로 이동 불가
     const updatedContent = [...formContent];
@@ -92,16 +150,16 @@ const ApplyForm = () => {
     setFormContent(updatedContent);
   };
 
+  // 질문 데이터 업데이트
   const updateQuestion = (id, updatedData) => {
-    setFormContent(
-      formContent.map((item) =>
-        item.id === id ? { ...item, ...updatedData } : item
-      )
+    setFormContent((prev) =>
+      prev.map((item) => (item.id === id ? { ...item, ...updatedData } : item))
     );
   };
 
+  // 항목 삭제
   const deleteItem = (id) => {
-    setFormContent(formContent.filter((item) => item.id !== id));
+    setFormContent((prev) => prev.filter((item) => item.id !== id));
   };
 
   return (
@@ -163,14 +221,29 @@ const ApplyForm = () => {
                           <Input
                             type="text"
                             placeholder="제목 입력*"
-                            isQuestionInput
+                            value={item.text || ""}
+                            onChange={(e) =>
+                              updateQuestion(item.id, {
+                                text: e.target.value,
+                              })
+                            }
                           />
-                          <Input type="text" placeholder="설명 입력" />
+                          {/* 추가된 설명 입력 부분 */}
+                          <Input
+                            type="text"
+                            placeholder="설명 입력*"
+                            value={item.description || ""}
+                            onChange={(e) =>
+                              updateQuestion(item.id, {
+                                description: e.target.value,
+                              })
+                            }
+                            $isDescriptionInput // 여기서 `$`를 사용
+                          />
                         </DescriptionContent>
                       </DescriptionContainer>
                     ) : (
                       <QuestionBox
-                        key={item.id}
                         questionData={item}
                         updateQuestion={updateQuestion}
                         deleteQuestion={deleteItem}
@@ -183,17 +256,24 @@ const ApplyForm = () => {
           </LeftContent>
           <RightPanel>
             <ActionButton onClick={() => addQuestion("multiple_choice")}>
-              <Icon>?</Icon> 질문 추가
+              질문 추가
             </ActionButton>
-            <ActionButton onClick={addBorder}>
-              <Icon>+</Icon> 경계선 추가
-            </ActionButton>
-            <ActionButton onClick={addDescription}>
-              <Icon>≡</Icon> 설명글 추가
-            </ActionButton>
+
+            {/* <ActionButton onClick={addBorder}>경계선 추가</ActionButton> */}
+            <ActionButton onClick={addDescription}>설명글 추가</ActionButton>
           </RightPanel>
         </MainContent>
       </Container>
+
+      {/* 미니 팝업창 */}
+      {showPopup && (
+        <PopupOverlay onClick={closePopup}>
+          <Popup>
+            <PopupMessage>{popupMessage}</PopupMessage>
+            <ClosePopupButton onClick={closePopup}>확인</ClosePopupButton>
+          </Popup>
+        </PopupOverlay>
+      )}
     </Page>
   );
 };
@@ -338,7 +418,10 @@ const DescriptionContent = styled.div`
 
 const Input = styled.input`
   padding: 10px;
-  font-size: ${(props) => (props.isQuestionInput ? "18px" : "16px")};
+  font-size: ${(props) =>
+    props.$isDescriptionInput
+      ? "14px"
+      : "16px"}; /* 설명 입력은 글씨 크기 작게 */
   border: 1px solid #ddd;
   border-radius: 5px;
   width: 100%;
@@ -444,4 +527,46 @@ const ArrowButton = styled.button`
 
 const ContentContainer = styled.div`
   flex: 1;
+`;
+
+const PopupOverlay = styled.div`
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.4);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+`;
+
+const Popup = styled.div`
+  background-color: white;
+  padding: 20px;
+  border-radius: 10px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  text-align: center;
+  z-index: 1100;
+`;
+
+const PopupMessage = styled.p`
+  font-size: 16px;
+  color: #333;
+  margin-bottom: 20px;
+`;
+
+const ClosePopupButton = styled.button`
+  background-color: #b10d15;
+  color: white;
+  padding: 10px 20px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 14px;
+
+  &:hover {
+    background-color: #9c0c13;
+  }
 `;
